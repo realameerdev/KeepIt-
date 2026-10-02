@@ -2,13 +2,13 @@ import { KeepItem, User } from '../types';
 
 const STORAGE_KEYS = {
   ITEMS: 'keepit_items_v3',
-  USER: 'keepit_user_v3',
+  USER: 'keepit_user_v4',
 };
 
 export const DEFAULT_USER: User = {
   id: 'user_default',
-  name: 'Hamzah Abdullah',
-  email: 'abdulrofihabdullahhamzah@gmail.com',
+  name: 'Nikita Adebayo',
+  email: 'nikita.info@gmail.com',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
   createdAt: new Date().toISOString(),
 };
