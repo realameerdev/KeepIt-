@@ -158,37 +158,48 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             )}
 
             {/* Preview items grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {interactiveItems.slice(0, 4).map((item) => (
-                <div
-                  key={item.id}
-                  className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-slate-300 transition-all space-y-2 text-left"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600">
-                      {item.category}
-                    </span>
-                    {item.isPinned && (
-                      <span className="flex items-center gap-0.5 text-[10px] font-semibold text-slate-400">
-                        <Pin className="w-3 h-3" /> Pinned
+            {interactiveItems.length === 0 ? (
+              <div className="py-8 px-4 text-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 space-y-1.5">
+                <p className="text-xs font-semibold text-slate-700">
+                  Your personal vault is ready for you.
+                </p>
+                <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                  Type a link, note, or resource in the box above to keep it right now.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {interactiveItems.slice(0, 4).map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-slate-300 transition-all space-y-2 text-left"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600">
+                        {item.category}
                       </span>
+                      {item.isPinned && (
+                        <span className="flex items-center gap-0.5 text-[10px] font-semibold text-slate-400">
+                          <Pin className="w-3 h-3" /> Pinned
+                        </span>
+                      )}
+                    </div>
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug line-clamp-1">
+                      {item.title}
+                    </h4>
+                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                      {item.description}
+                    </p>
+                    {item.url && (
+                      <div className="text-[11px] text-slate-600 hover:underline flex items-center gap-1 truncate pt-1">
+                        <LinkIcon className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{item.url}</span>
+                      </div>
                     )}
                   </div>
-                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug line-clamp-1">
-                    {item.title}
-                  </h4>
-                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                    {item.description}
-                  </p>
-                  {item.url && (
-                    <div className="text-[11px] text-slate-600 hover:underline flex items-center gap-1 truncate pt-1">
-                      <LinkIcon className="w-3 h-3 shrink-0" />
-                      <span className="truncate">{item.url}</span>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             {/* Bottom preview note */}
             <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">

@@ -117,7 +117,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const handleResetData = () => {
-    if (window.confirm('Reset your vault to the initial sample items?')) {
+    if (window.confirm('Are you sure you want to clear all items in your vault? This cannot be undone.')) {
       resetToSampleData();
       onRefreshItems();
       onUserUpdate(user);
@@ -286,7 +286,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 className="text-xs font-semibold text-slate-500 hover:text-red-600 transition-colors flex items-center gap-1.5 py-1 cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset to Sample Vault</span>
+                <span>Clear Vault</span>
               </button>
             </div>
           </div>
