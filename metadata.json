@@ -1,0 +1,6 @@
+{
+  "name": "KeepIt — Personal Saving & Reminder Platform",
+  "description": "Don't lose what matters. Keep links, notes, images, and expiry reminders in one clean, simple place.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
