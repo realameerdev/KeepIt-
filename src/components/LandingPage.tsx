@@ -39,7 +39,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [interactiveItems, setInteractiveItems] = useState<KeepItem[]>(sampleItems.slice(0, 4));
   const [addedNotice, setAddedNotice] = useState(false);
 
-  const handleQuickAdd = (e: React.FormEvent) => {
+  const handleQuickAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!quickInput.trim()) return;
 
@@ -48,14 +48,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       quickInput.startsWith('https://') ||
       quickInput.includes('.com') ||
       quickInput.includes('.org') ||
-      quickInput.includes('.io');
+      quickInput.includes('.io') ||
+      quickInput.includes('.net') ||
+      quickInput.includes('.dev');
+
+    let title = quickInput.trim();
+    let description = isUrl ? 'Saved web link' : 'Quick note kept safely';
+    let url = isUrl ? (quickInput.startsWith('http') ? quickInput : `https://${quickInput}`) : undefined;
+
+    if (isUrl && url) {
+      try {
+        const metadata = await import('../lib/linkMetadata').then(m => m.fetchLinkMetadata(url!));
+        title = metadata.title;
+        description = metadata.description;
+      } catch {
+        // fallback
+      }
+    }
 
     const newItem: KeepItem = {
       id: 'preview-' + Date.now(),
       userId: 'demo',
-      title: quickInput.trim(),
-      description: isUrl ? 'Saved web link' : 'Quick note kept safely',
-      url: isUrl ? (quickInput.startsWith('http') ? quickInput : `https://${quickInput}`) : undefined,
+      title,
+      description,
+      url,
       category: isUrl ? 'link' : 'note',
       tags: ['Personal', isUrl ? 'Web' : 'QuickKeep'],
       isArchived: false,

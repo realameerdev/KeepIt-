@@ -11,8 +11,12 @@ import {
   Upload,
   AlertCircle,
   Bookmark,
+  Sparkles,
+  Loader2,
+  Check,
 } from 'lucide-react';
 import { getStoredUser } from '../lib/storage';
+import { fetchLinkMetadata } from '../lib/linkMetadata';
 
 interface SaveItemModalProps {
   isOpen: boolean;
@@ -46,11 +50,13 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
   const [description, setDescription] = useState('');
   const [url, setUrl] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  const [category, setCategory] = useState<ItemCategory>('note');
+  const [category, setCategory] = useState<ItemCategory>('link');
   const [tags, setTags] = useState<string[]>([]);
   const [newTagInput, setNewTagInput] = useState('');
   const [isPinned, setIsPinned] = useState(false);
-  const [errors, setErrors] = useState<{ title?: string }>({});
+  const [errors, setErrors] = useState<{ title?: string; url?: string; description?: string; imageUrl?: string }>({});
+  const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
+  const [fetchSuccessNotice, setFetchSuccessNotice] = useState(false);
 
   useEffect(() => {
     if (initialItem) {
@@ -58,9 +64,10 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
       setDescription(initialItem.description || '');
       setUrl(initialItem.url || '');
       setImageUrl(initialItem.imageUrl || '');
-      setCategory(initialItem.category || 'note');
+      setCategory(initialItem.category || 'link');
       setTags(initialItem.tags || []);
       setIsPinned(Boolean(initialItem.isPinned));
+      setErrors({});
     } else {
       resetForm();
     }
@@ -71,11 +78,13 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
     setDescription('');
     setUrl('');
     setImageUrl('');
-    setCategory('note');
+    setCategory('link');
     setTags([]);
     setNewTagInput('');
     setIsPinned(false);
     setErrors({});
+    setIsFetchingMetadata(false);
+    setFetchSuccessNotice(false);
   };
 
   if (!isOpen) return null;
@@ -98,31 +107,82 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
       const reader = new FileReader();
       reader.onloadend = () => {
         setImageUrl(reader.result as string);
-        if (category === 'note') setCategory('image');
+        if (errors.imageUrl) setErrors((prev) => ({ ...prev, imageUrl: undefined }));
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // Smart detect category when URL entered
-  const handleUrlBlur = () => {
-    if (url.trim()) {
-      let formattedUrl = url.trim();
-      if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-        formattedUrl = `https://${formattedUrl}`;
-        setUrl(formattedUrl);
+  // Trigger automated metadata fetch when URL is pasted or blurred
+  const handleAutoFetchUrl = async (targetUrl: string) => {
+    if (!targetUrl.trim()) return;
+    let formatted = targetUrl.trim();
+    if (!formatted.startsWith('http://') && !formatted.startsWith('https://')) {
+      formatted = `https://${formatted}`;
+      setUrl(formatted);
+    }
+
+    setIsFetchingMetadata(true);
+    setErrors((prev) => ({ ...prev, url: undefined }));
+
+    try {
+      const metadata = await fetchLinkMetadata(formatted);
+      if (!title.trim() || title === 'Kept from ' + formatted) {
+        setTitle(metadata.title);
       }
-      if (category === 'note') {
-        setCategory('link');
+      if (!description.trim()) {
+        setDescription(metadata.description);
       }
+      if (!imageUrl && metadata.imageUrl) {
+        setImageUrl(metadata.imageUrl);
+      }
+      if (metadata.tags && metadata.tags.length > 0) {
+        const mergedTags = Array.from(new Set([...tags, ...metadata.tags]));
+        setTags(mergedTags);
+      }
+      setFetchSuccessNotice(true);
+      setTimeout(() => setFetchSuccessNotice(false), 3000);
+    } catch (err) {
+      console.error('Failed to auto-fetch link content', err);
+    } finally {
+      setIsFetchingMetadata(false);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const newErrors: { title?: string; url?: string; description?: string; imageUrl?: string } = {};
 
+    // 1. Title compulsory for all sections
     if (!title.trim()) {
-      setErrors({ title: 'Please enter a title for what you want to keep' });
+      newErrors.title = 'Title / Name is required';
+    }
+
+    // 2. Compulsory field validation per category
+    if (category === 'link') {
+      if (!url.trim()) {
+        newErrors.url = 'Web link (URL) is required for Link items';
+      }
+    } else if (category === 'note') {
+      if (!description.trim()) {
+        newErrors.description = 'Note content / details are required for Note items';
+      }
+    } else if (category === 'image') {
+      if (!imageUrl.trim()) {
+        newErrors.imageUrl = 'An image upload or image URL is required for Image items';
+      }
+    } else if (category === 'document') {
+      if (!url.trim() && !description.trim()) {
+        newErrors.url = 'Document link or document content description is required';
+      }
+    } else if (category === 'resource') {
+      if (!url.trim() && !description.trim()) {
+        newErrors.url = 'Resource URL or summary details are required';
+      }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -149,7 +209,7 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div
-        className="w-full max-w-lg bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
+        className="w-full max-w-lg bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200 text-left"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -159,7 +219,7 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
               {initialItem ? 'Edit Kept Item' : 'Keep Something'}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Save what you don't want to lose
+              Every section requires its compulsory information
             </p>
           </div>
           <button
@@ -172,11 +232,11 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
         </div>
 
         {/* Scrollable Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5 grow text-left">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5 grow">
           {/* Category Selector */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Type of Item
+              Select Section / Category <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 text-xs font-medium">
               {[
@@ -192,7 +252,10 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
                   <button
                     key={cat.id}
                     type="button"
-                    onClick={() => setCategory(cat.id as ItemCategory)}
+                    onClick={() => {
+                      setCategory(cat.id as ItemCategory);
+                      setErrors({});
+                    }}
                     className={`py-2 px-2.5 rounded-xl border flex flex-col items-center gap-1 transition-all cursor-pointer ${
                       isSelected
                         ? 'border-slate-900 bg-slate-900 text-white font-bold shadow-xs'
@@ -207,7 +270,7 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
             </div>
           </div>
 
-          {/* Title */}
+          {/* Title (Compulsory for all) */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
               Title / Name <span className="text-red-500">*</span>
@@ -217,13 +280,18 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
-                if (errors.title) setErrors({});
+                if (errors.title) setErrors((prev) => ({ ...prev, title: undefined }));
               }}
-              placeholder="e.g. Wi-Fi Access Codes, Great Design Article, Coffee Recipe..."
+              placeholder={
+                category === 'link'
+                  ? 'e.g. Awesome Article Title'
+                  : category === 'note'
+                  ? 'e.g. Wi-Fi Password & Gate Codes'
+                  : 'e.g. Project Inspiration Image'
+              }
               className={`w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900 transition-all font-medium ${
                 errors.title ? 'border-red-400 bg-red-50/30' : 'border-slate-200'
               }`}
-              autoFocus
             />
             {errors.title && (
               <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1 font-medium">
@@ -232,42 +300,105 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
             )}
           </div>
 
-          {/* URL / Link */}
-          <div>
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <LinkIcon className="w-3.5 h-3.5 text-slate-400" />
-              Web Link <span className="text-[11px] font-normal text-slate-400 lowercase">(optional)</span>
-            </label>
-            <input
-              type="text"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              onBlur={handleUrlBlur}
-              placeholder="https://example.com/useful-page"
-              className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900 transition-all font-mono"
-            />
+          {/* URL / Link (Compulsory if Link) */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <LinkIcon className="w-3.5 h-3.5 text-slate-400" />
+                Web Link {category === 'link' ? <span className="text-red-500">*</span> : <span className="text-[11px] font-normal text-slate-400 lowercase">(optional)</span>}
+              </label>
+              {url.trim() && (
+                <button
+                  type="button"
+                  onClick={() => handleAutoFetchUrl(url)}
+                  disabled={isFetchingMetadata}
+                  className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                >
+                  {isFetchingMetadata ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>Extracting Content...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3 h-3" />
+                      <span>Auto-fetch link content</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+
+            <div className="relative">
+              <input
+                type="text"
+                value={url}
+                onChange={(e) => {
+                  setUrl(e.target.value);
+                  if (errors.url) setErrors((prev) => ({ ...prev, url: undefined }));
+                }}
+                onBlur={(e) => {
+                  if (e.target.value.trim()) {
+                    handleAutoFetchUrl(e.target.value);
+                  }
+                }}
+                placeholder="https://example.com/any-link-at-all"
+                className={`w-full px-3.5 py-2.5 text-xs bg-slate-50 border rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900 transition-all font-mono ${
+                  errors.url ? 'border-red-400 bg-red-50/30' : 'border-slate-200'
+                }`}
+              />
+            </div>
+
+            {fetchSuccessNotice && (
+              <p className="text-xs text-emerald-600 flex items-center gap-1 font-medium animate-in fade-in">
+                <Check className="w-3.5 h-3.5" /> Successfully fetched link content & metadata!
+              </p>
+            )}
+
+            {errors.url && (
+              <p className="text-xs text-red-600 flex items-center gap-1 font-medium">
+                <AlertCircle className="w-3.5 h-3.5" /> {errors.url}
+              </p>
+            )}
+            <p className="text-[11px] text-slate-400">
+              Paste any link at all. Our scraping engine automatically fetches the title, description, and preview image.
+            </p>
           </div>
 
-          {/* Description / Content */}
+          {/* Description / Notes (Compulsory if Note) */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5 text-slate-400" />
-              Notes / Details <span className="text-[11px] font-normal text-slate-400 lowercase">(optional)</span>
+              Note Content / Summary {category === 'note' ? <span className="text-red-500">*</span> : <span className="text-[11px] font-normal text-slate-400 lowercase">(optional)</span>}
             </label>
             <textarea
               rows={3}
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Key notes, passwords, instructions, thoughts, or quotes..."
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900 transition-all resize-none leading-relaxed"
+              onChange={(e) => {
+                setDescription(e.target.value);
+                if (errors.description) setErrors((prev) => ({ ...prev, description: undefined }));
+              }}
+              placeholder={
+                category === 'note'
+                  ? 'Compulsory note details, passwords, codes, or text...'
+                  : 'Key details or summary extracted from link...'
+              }
+              className={`w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900 transition-all resize-none leading-relaxed ${
+                errors.description ? 'border-red-400 bg-red-50/30' : 'border-slate-200'
+              }`}
             />
+            {errors.description && (
+              <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1 font-medium">
+                <AlertCircle className="w-3.5 h-3.5" /> {errors.description}
+              </p>
+            )}
           </div>
 
-          {/* Image Attachment */}
+          {/* Image Attachment (Compulsory if Image) */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
               <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
-              Image or Snapshot <span className="text-[11px] font-normal text-slate-400 lowercase">(optional)</span>
+              Image / Snapshot {category === 'image' ? <span className="text-red-500">*</span> : <span className="text-[11px] font-normal text-slate-400 lowercase">(optional)</span>}
             </label>
 
             {imageUrl ? (
@@ -301,10 +432,18 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
                   type="text"
                   placeholder="Or paste image URL"
                   value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
+                  onChange={(e) => {
+                    setImageUrl(e.target.value);
+                    if (errors.imageUrl) setErrors((prev) => ({ ...prev, imageUrl: undefined }));
+                  }}
                   className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900 transition-all font-mono"
                 />
               </div>
+            )}
+            {errors.imageUrl && (
+              <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1 font-medium">
+                <AlertCircle className="w-3.5 h-3.5" /> {errors.imageUrl}
+              </p>
             )}
           </div>
 

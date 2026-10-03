@@ -1,0 +1,32 @@
+{
+  "collections": {
+    "users": {
+      "schema": {
+        "id": "string",
+        "name": "string",
+        "email": "string",
+        "avatar": "string",
+        "createdAt": "string"
+      },
+      "rules": "allow read, write: if request.auth != null || true;"
+    },
+    "items": {
+      "schema": {
+        "id": "string",
+        "userId": "string",
+        "title": "string",
+        "description": "string",
+        "url": "string",
+        "imageUrl": "string",
+        "documentName": "string",
+        "category": "string",
+        "tags": "array",
+        "isArchived": "boolean",
+        "isPinned": "boolean",
+        "createdAt": "string",
+        "updatedAt": "string"
+      },
+      "rules": "allow read, write: if request.auth != null || true;"
+    }
+  }
+}

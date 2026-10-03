@@ -1,4 +1,6 @@
 import { KeepItem, User } from '../types';
+import { db } from './firebase';
+import { doc, setDoc, getDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 
 const STORAGE_KEYS = {
   ITEMS: 'keepit_items_v3',
@@ -33,6 +35,16 @@ export const updateStoredUser = (updates: Partial<User>): User => {
   const current = getStoredUser();
   const updated = { ...current, ...updates };
   localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updated));
+
+  // Sync to Firebase Firestore
+  try {
+    setDoc(doc(db, 'users', updated.id), updated, { merge: true }).catch((err) =>
+      console.warn('Firestore user sync warning:', err)
+    );
+  } catch (err) {
+    console.warn('Firestore unavailable', err);
+  }
+
   return updated;
 };
 
@@ -49,6 +61,25 @@ export const getStoredItems = (): KeepItem[] => {
   }
 };
 
+// Sync from Firestore on startup
+export const syncItemsFromFirestore = async (): Promise<KeepItem[]> => {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'items'));
+    const items: KeepItem[] = [];
+    querySnapshot.forEach((docSnap) => {
+      items.push(docSnap.data() as KeepItem);
+    });
+    if (items.length > 0) {
+      items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      localStorage.setItem(STORAGE_KEYS.ITEMS, JSON.stringify(items));
+      return items;
+    }
+  } catch (err) {
+    console.warn('Firestore fetch warning:', err);
+  }
+  return getStoredItems();
+};
+
 export const saveItemToStorage = (item: KeepItem): KeepItem[] => {
   const items = getStoredItems();
   const existingIndex = items.findIndex((i) => i.id === item.id);
@@ -60,27 +91,62 @@ export const saveItemToStorage = (item: KeepItem): KeepItem[] => {
     updated = [item, ...items];
   }
   localStorage.setItem(STORAGE_KEYS.ITEMS, JSON.stringify(updated));
+
+  // Sync to Firestore
+  try {
+    const itemToSync = existingIndex >= 0 ? updated[existingIndex] : item;
+    setDoc(doc(db, 'items', itemToSync.id), itemToSync).catch((err) =>
+      console.warn('Firestore save item warning:', err)
+    );
+  } catch (err) {
+    console.warn('Firestore unavailable', err);
+  }
+
   return updated;
 };
 
 export const deleteItemFromStorage = (id: string): KeepItem[] => {
   const items = getStoredItems().filter((i) => i.id !== id);
   localStorage.setItem(STORAGE_KEYS.ITEMS, JSON.stringify(items));
+
+  // Delete from Firestore
+  try {
+    deleteDoc(doc(db, 'items', id)).catch((err) =>
+      console.warn('Firestore delete warning:', err)
+    );
+  } catch (err) {
+    console.warn('Firestore unavailable', err);
+  }
+
   return items;
 };
 
 export const toggleArchiveItem = (id: string): KeepItem[] => {
-  const items = getStoredItems().map((i) =>
-    i.id === id ? { ...i, isArchived: !i.isArchived, updatedAt: new Date().toISOString() } : i
-  );
+  const items = getStoredItems().map((i) => {
+    if (i.id === id) {
+      const updatedItem = { ...i, isArchived: !i.isArchived, updatedAt: new Date().toISOString() };
+      try {
+        setDoc(doc(db, 'items', id), updatedItem, { merge: true }).catch(() => {});
+      } catch {}
+      return updatedItem;
+    }
+    return i;
+  });
   localStorage.setItem(STORAGE_KEYS.ITEMS, JSON.stringify(items));
   return items;
 };
 
 export const togglePinItem = (id: string): KeepItem[] => {
-  const items = getStoredItems().map((i) =>
-    i.id === id ? { ...i, isPinned: !i.isPinned, updatedAt: new Date().toISOString() } : i
-  );
+  const items = getStoredItems().map((i) => {
+    if (i.id === id) {
+      const updatedItem = { ...i, isPinned: !i.isPinned, updatedAt: new Date().toISOString() };
+      try {
+        setDoc(doc(db, 'items', id), updatedItem, { merge: true }).catch(() => {});
+      } catch {}
+      return updatedItem;
+    }
+    return i;
+  });
   localStorage.setItem(STORAGE_KEYS.ITEMS, JSON.stringify(items));
   return items;
 };
