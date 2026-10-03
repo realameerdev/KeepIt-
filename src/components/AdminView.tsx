@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Users, Database, Activity, TrendingUp, RefreshCw, Lock, Mail, ArrowLeft, LogOut } from 'lucide-react';
+import { ShieldCheck, Users, Database, Activity, TrendingUp, RefreshCw, Lock, Mail, ArrowLeft, LogOut, Eye, X, ExternalLink, HelpCircle } from 'lucide-react';
 import { fetchAnalyticsData, AnalyticsMetrics } from '../lib/storage';
 import { KeepItLogo } from './KeepItLogo';
+import { KeepItem, User } from '../types';
 
 const AUTHORIZED_ADMIN_EMAIL = 'abdulrofihabdullahhamzah@gmail.com';
 
@@ -13,6 +14,7 @@ export const AdminView: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [metrics, setMetrics] = useState<AnalyticsMetrics | null>(null);
   const [loading, setLoading] = useState(false);
+  const [selectedUserForItems, setSelectedUserForItems] = useState<User | null>(null);
 
   const loadAnalytics = async () => {
     setLoading(true);
@@ -70,7 +72,7 @@ export const AdminView: React.FC = () => {
             </div>
             <h1 className="text-xl font-black tracking-tight text-white">Admin Authentication</h1>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Enter administrator credentials to access system analytics.
+              Enter administrator credentials to access system analytics and user items.
             </p>
           </div>
 
@@ -110,6 +112,11 @@ export const AdminView: React.FC = () => {
     );
   }
 
+  // Filter items for selected user
+  const userItems = selectedUserForItems && metrics
+    ? metrics.itemsList.filter((i) => i.userId === selectedUserForItems.id)
+    : [];
+
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
       {/* Admin Header - Mobile Responsive */}
@@ -123,7 +130,7 @@ export const AdminView: React.FC = () => {
               KeepIt Admin Dashboard
             </h1>
             <p className="text-[11px] sm:text-xs text-slate-400">
-              System analytics & visitor tracking
+              System analytics & user storage inspection
             </p>
           </div>
         </div>
@@ -159,7 +166,7 @@ export const AdminView: React.FC = () => {
         {loading && !metrics ? (
           <div className="py-24 text-center text-sm text-slate-400 flex items-center justify-center gap-2">
             <RefreshCw className="w-5 h-5 animate-spin text-indigo-400" />
-            <span>Loading system analytics from Firestore...</span>
+            <span>Loading system analytics and user storage from Firestore...</span>
           </div>
         ) : metrics ? (
           <>
@@ -220,38 +227,49 @@ export const AdminView: React.FC = () => {
               </div>
             </div>
 
-            {/* Users Table - Fully Responsive with Zero Overlap */}
+            {/* Users Table with View Storage / Items Action */}
             <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 sm:p-6 space-y-4 shadow-xl">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <h2 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
                   All Signed & Tracked Visitors ({metrics.usersList.length})
                 </h2>
-                <span className="text-[11px] text-slate-500">Every visitor who has ever clicked the link</span>
+                <span className="text-[11px] text-slate-500">Click "View Saved Items" to inspect what each user saved</span>
               </div>
 
               <div className="w-full overflow-x-auto">
-                <table className="w-full text-xs text-left min-w-[550px]">
+                <table className="w-full text-xs text-left min-w-[650px]">
                   <thead className="bg-slate-900 text-slate-400 font-semibold border-b border-slate-800">
                     <tr>
                       <th className="p-3 rounded-l-xl">Visitor ID</th>
-                      <th className="p-3">Session Count</th>
-                      <th className="p-3">First Joined</th>
-                      <th className="p-3 rounded-r-xl">Last Active</th>
+                      <th className="p-3">Sessions</th>
+                      <th className="p-3">Saved Items Count</th>
+                      <th className="p-3">Last Active</th>
+                      <th className="p-3 rounded-r-xl text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/80">
-                    {metrics.usersList.map((u) => (
-                      <tr key={u.id} className="hover:bg-slate-900/50">
-                        <td className="p-3 font-mono text-slate-300">{u.id}</td>
-                        <td className="p-3 font-bold text-indigo-400 tabular-nums">{u.sessionCount || 1}</td>
-                        <td className="p-3 text-slate-400">
-                          {new Date(u.createdAt || Date.now()).toLocaleString()}
-                        </td>
-                        <td className="p-3 text-slate-400">
-                          {new Date(u.lastActive || Date.now()).toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
+                    {metrics.usersList.map((u) => {
+                      const count = metrics.itemsList.filter((i) => i.userId === u.id).length;
+                      return (
+                        <tr key={u.id} className="hover:bg-slate-900/50">
+                          <td className="p-3 font-mono text-slate-300">{u.id}</td>
+                          <td className="p-3 font-bold text-indigo-400 tabular-nums">{u.sessionCount || 1}</td>
+                          <td className="p-3 font-bold text-emerald-400 tabular-nums">{count} items</td>
+                          <td className="p-3 text-slate-400">
+                            {new Date(u.lastActive || u.createdAt || Date.now()).toLocaleString()}
+                          </td>
+                          <td className="p-3 text-right">
+                            <button
+                              onClick={() => setSelectedUserForItems(u)}
+                              className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>View Saved Items</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -261,6 +279,105 @@ export const AdminView: React.FC = () => {
           <p className="text-center text-xs text-slate-400 py-12">Failed to load analytics metrics.</p>
         )}
       </main>
+
+      {/* User Items Inspection Modal */}
+      {selectedUserForItems && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-200">
+          <div
+            className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200 text-left"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
+              <div>
+                <h3 className="text-sm sm:text-base font-extrabold text-white">
+                  Visitor Storage: <span className="font-mono text-indigo-400 text-xs">{selectedUserForItems.id}</span>
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {userItems.length} items saved by this user in Firebase
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedUserForItems(null)}
+                className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-3.5 grow bg-slate-900/50">
+              {userItems.length === 0 ? (
+                <div className="py-16 text-center text-slate-500 space-y-2">
+                  <Database className="w-8 h-8 mx-auto opacity-40 text-slate-400" />
+                  <p className="text-xs">No items saved by this visitor yet.</p>
+                </div>
+              ) : (
+                userItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-2.5 text-left"
+                  >
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <span className="capitalize font-bold text-indigo-300">{item.category}</span>
+                      <span className="tabular-nums">{new Date(item.createdAt).toLocaleString()}</span>
+                    </div>
+
+                    <h4 className="text-sm font-bold text-white leading-snug">{item.title}</h4>
+
+                    {item.whyKept && (
+                      <div className="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-900/50 text-xs text-indigo-200 flex items-start gap-2">
+                        <HelpCircle className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                        <span><strong className="font-bold">Why I kept this:</strong> {item.whyKept}</span>
+                      </div>
+                    )}
+
+                    {item.description && (
+                      <p className="text-xs text-slate-300 leading-relaxed">{item.description}</p>
+                    )}
+
+                    {item.url && (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-mono text-sky-400 hover:underline truncate max-w-full"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">{item.url}</span>
+                      </a>
+                    )}
+
+                    {item.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {item.tags.map((t) => (
+                          <span
+                            key={t}
+                            className="px-2 py-0.5 text-[10px] font-medium bg-slate-900 text-slate-300 rounded-lg border border-slate-800"
+                          >
+                            #{t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 shrink-0">
+              <span>Synced directly from Firebase Firestore</span>
+              <button
+                onClick={() => setSelectedUserForItems(null)}
+                className="px-4 py-2 bg-slate-800 text-white font-semibold rounded-xl hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Admin Footer */}
       <footer className="bg-slate-950 border-t border-slate-800 px-4 sm:px-6 py-4 text-center text-xs text-slate-500 shrink-0">
