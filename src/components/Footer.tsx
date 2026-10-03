@@ -27,7 +27,7 @@ export const Footer: React.FC<FooterProps> = ({ onStartKeeping, onSelectTab }) =
           >
             <Coffee className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-800 transition-colors" />
             <span>Buy me a coffee</span>
-            <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
+            <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600" />
           </a>
         </div>
 

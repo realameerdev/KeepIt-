@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { KeepItem, User, FilterView } from './types';
 import {
   getStoredUser,
@@ -12,6 +12,7 @@ import {
   deleteItemFromStorage,
   toggleArchiveItem,
   togglePinItem,
+  syncItemsFromFirestore,
 } from './lib/storage';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
@@ -20,8 +21,33 @@ import { SettingsView } from './components/SettingsView';
 import { Footer } from './components/Footer';
 import { SaveItemModal } from './components/SaveItemModal';
 import { ItemDetailsModal } from './components/ItemDetailsModal';
+import { AdminView } from './components/AdminView';
 
 export default function App() {
+  const [isAdminRoute, setIsAdminRoute] = useState<boolean>(() => {
+    return (
+      window.location.pathname === '/admin' ||
+      window.location.hash === '#/admin' ||
+      window.location.hash === '#admin'
+    );
+  });
+
+  useEffect(() => {
+    const checkRoute = () => {
+      setIsAdminRoute(
+        window.location.pathname === '/admin' ||
+        window.location.hash === '#/admin' ||
+        window.location.hash === '#admin'
+      );
+    };
+    window.addEventListener('popstate', checkRoute);
+    window.addEventListener('hashchange', checkRoute);
+    return () => {
+      window.removeEventListener('popstate', checkRoute);
+      window.removeEventListener('hashchange', checkRoute);
+    };
+  }, []);
+
   const [user, setUser] = useState<User>(() => getStoredUser());
   const [items, setItems] = useState<KeepItem[]>(() => getStoredItems());
 
@@ -33,6 +59,17 @@ export default function App() {
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [selectedItemForDetails, setSelectedItemForDetails] = useState<KeepItem | null>(null);
   const [editingItem, setEditingItem] = useState<KeepItem | null>(null);
+
+  // Sync from Firestore on mount
+  useEffect(() => {
+    syncItemsFromFirestore()
+      .then((synced) => {
+        if (synced && synced.length > 0) {
+          setItems(synced);
+        }
+      })
+      .catch((err) => console.warn('Sync from firestore skipped', err));
+  }, []);
 
   // Reload items helper
   const refreshItems = useCallback(() => {
@@ -82,6 +119,11 @@ export default function App() {
     setActiveNavTab(tab);
     if (tab === 'vault' || tab === 'all') setDashboardFilter('all');
   };
+
+  // If user navigated to /admin, render AdminView
+  if (isAdminRoute) {
+    return <AdminView />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA] text-slate-900 font-sans selection:bg-slate-900 selection:text-white">

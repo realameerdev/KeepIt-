@@ -9,10 +9,7 @@ import {
   Archive,
   Trash2,
   Edit2,
-  FileText,
-  Link as LinkIcon,
-  Image as ImageIcon,
-  FolderOpen,
+  HelpCircle,
 } from 'lucide-react';
 
 interface ItemCardProps {
@@ -178,6 +175,14 @@ export const ItemCard: React.FC<ItemCardProps> = ({
         <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-slate-800 transition-colors leading-snug tracking-tight mb-1 line-clamp-2">
           {item.title}
         </h3>
+
+        {/* "Why I Kept This" Context */}
+        {item.whyKept && (
+          <div className="mb-2 p-2 rounded-xl bg-indigo-50/70 border border-indigo-100 text-[11px] text-indigo-900 font-medium flex items-start gap-1.5">
+            <HelpCircle className="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5" />
+            <span className="leading-tight"><strong className="font-bold">Why I kept this:</strong> {item.whyKept}</span>
+          </div>
+        )}
 
         {/* Description / Content snippet */}
         {item.description && (

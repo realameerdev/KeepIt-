@@ -14,6 +14,7 @@ import {
   Sparkles,
   Loader2,
   Check,
+  HelpCircle,
 } from 'lucide-react';
 import { getStoredUser } from '../lib/storage';
 import { fetchLinkMetadata } from '../lib/linkMetadata';
@@ -48,6 +49,7 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [whyKept, setWhyKept] = useState('');
   const [url, setUrl] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [category, setCategory] = useState<ItemCategory>('link');
@@ -62,6 +64,7 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
     if (initialItem) {
       setTitle(initialItem.title || '');
       setDescription(initialItem.description || '');
+      setWhyKept(initialItem.whyKept || '');
       setUrl(initialItem.url || '');
       setImageUrl(initialItem.imageUrl || '');
       setCategory(initialItem.category || 'link');
@@ -76,6 +79,7 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
   const resetForm = () => {
     setTitle('');
     setDescription('');
+    setWhyKept('');
     setUrl('');
     setImageUrl('');
     setCategory('link');
@@ -191,6 +195,7 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
       userId: user.id,
       title: title.trim(),
       description: description.trim(),
+      whyKept: whyKept.trim() || undefined,
       url: url.trim() || undefined,
       imageUrl: imageUrl.trim() || undefined,
       category,
@@ -219,7 +224,7 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
               {initialItem ? 'Edit Kept Item' : 'Keep Something'}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Every section requires its compulsory information
+              Securely store what matters with personal context
             </p>
           </div>
           <button
@@ -363,6 +368,21 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
             <p className="text-[11px] text-slate-400">
               Paste any link at all. Our scraping engine automatically fetches the title, description, and preview image.
             </p>
+          </div>
+
+          {/* "Why I kept this" Context Field */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+              <HelpCircle className="w-3.5 h-3.5 text-indigo-500" />
+              Why I kept this <span className="text-[11px] font-normal text-slate-400 lowercase">(personal context)</span>
+            </label>
+            <input
+              type="text"
+              value={whyKept}
+              onChange={(e) => setWhyKept(e.target.value)}
+              placeholder="e.g. Needed for next Tuesday's project presentation..."
+              className="w-full px-3.5 py-2.5 text-xs bg-indigo-50/40 border border-indigo-200/70 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-slate-800"
+            />
           </div>
 
           {/* Description / Notes (Compulsory if Note) */}

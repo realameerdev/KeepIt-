@@ -5,6 +5,7 @@ export interface KeepItem {
   userId: string;
   title: string;
   description: string;
+  whyKept?: string; // "Why I kept this" context
   url?: string;
   imageUrl?: string;
   documentName?: string;
@@ -22,6 +23,8 @@ export interface User {
   email: string;
   avatar?: string;
   createdAt: string;
+  lastActive?: string;
+  sessionCount?: number;
 }
 
 export type FilterView =
@@ -32,7 +35,9 @@ export type FilterView =
   | 'images'
   | 'documents'
   | 'resources'
-  | 'archived';
+  | 'archived'
+  | 'inbox'
+  | 'timeline';
 
 export type SortOrder = 'newest' | 'oldest' | 'title';
 export type ViewMode = 'grid' | 'list';
