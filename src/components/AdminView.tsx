@@ -40,7 +40,7 @@ export const AdminView: React.FC = () => {
       localStorage.setItem('keepit_admin_email', AUTHORIZED_ADMIN_EMAIL);
       setIsAuthenticated(true);
     } else {
-      setErrorMsg('Access denied. Only authorized admin email is permitted.');
+      setErrorMsg('Access denied. Invalid administrator credentials.');
     }
   };
 
@@ -53,14 +53,14 @@ export const AdminView: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-slate-100">
-        <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6 text-left">
+        <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-left">
           <div className="flex items-center justify-between">
             <KeepItLogo size="md" showText variant="white" />
             <a
               href="/"
               className="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition-colors"
             >
-              <ArrowLeft className="w-3.5 h-3.5" /> Back to App
+              <ArrowLeft className="w-3.5 h-3.5" /> Back
             </a>
           </div>
 
@@ -70,14 +70,14 @@ export const AdminView: React.FC = () => {
             </div>
             <h1 className="text-xl font-black tracking-tight text-white">Admin Authentication</h1>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Restricted area. Enter your authorized administrator email to access KeepIt system analytics.
+              Restricted area. Enter your administrator email to access KeepIt system analytics.
             </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                Authorized Admin Email
+                Admin Email
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -85,7 +85,7 @@ export const AdminView: React.FC = () => {
                   type="email"
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
-                  placeholder="abdulrofihabdullahhamzah@gmail.com"
+                  placeholder="Enter administrator email"
                   required
                   className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 transition-all font-mono"
                 />
@@ -102,13 +102,9 @@ export const AdminView: React.FC = () => {
               type="submit"
               className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-all shadow-lg shadow-indigo-600/20 cursor-pointer"
             >
-              Authenticate & Access Dashboard
+              Sign In to Admin Console
             </button>
           </form>
-
-          <p className="text-[11px] text-slate-500 text-center">
-            Locked to: <span className="font-mono text-slate-400">{AUTHORIZED_ADMIN_EMAIL}</span>
-          </p>
         </div>
       </div>
     );
@@ -116,23 +112,23 @@ export const AdminView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
-      {/* Admin Header */}
-      <header className="bg-slate-950 border-b border-slate-800 px-6 py-4 flex items-center justify-between shrink-0">
+      {/* Admin Header - Mobile Responsive */}
+      <header className="bg-slate-950 border-b border-slate-800 px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+          <div className="w-9 h-9 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
             <h1 className="text-sm sm:text-base font-extrabold text-white tracking-tight">
               KeepIt Admin Dashboard
             </h1>
-            <p className="text-xs text-slate-400">
-              Authorized: <span className="text-emerald-400 font-mono">{AUTHORIZED_ADMIN_EMAIL}</span>
+            <p className="text-[11px] sm:text-xs text-slate-400">
+              System analytics & visitor tracking
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
           <button
             onClick={loadAnalytics}
             disabled={loading}
@@ -158,8 +154,8 @@ export const AdminView: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Analytics Body */}
-      <main className="grow p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6 text-left">
+      {/* Main Analytics Body - Mobile Responsive */}
+      <main className="grow p-3 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6 text-left">
         {loading && !metrics ? (
           <div className="py-24 text-center text-sm text-slate-400 flex items-center justify-center gap-2">
             <RefreshCw className="w-5 h-5 animate-spin text-indigo-400" />
@@ -167,97 +163,99 @@ export const AdminView: React.FC = () => {
           </div>
         ) : metrics ? (
           <>
-            {/* Top Stats Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-              <div className="bg-slate-950/70 border border-slate-800 p-4 rounded-2xl space-y-1">
+            {/* Top Stats Grid - Mobile 2 cols, Tablet 3 cols, Desktop 6 cols */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+              <div className="bg-slate-950/70 border border-slate-800 p-3.5 sm:p-4 rounded-2xl space-y-1">
                 <div className="flex items-center justify-between text-slate-400">
-                  <span className="text-[11px] font-bold uppercase tracking-wider">Total Users</span>
+                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">Total Users</span>
                   <Users className="w-4 h-4 text-indigo-400" />
                 </div>
-                <div className="text-2xl font-black text-white tabular-nums">{metrics.totalUsers}</div>
-                <p className="text-[11px] text-slate-500">Anonymous visitors</p>
+                <div className="text-xl sm:text-2xl font-black text-white tabular-nums">{metrics.totalUsers}</div>
+                <p className="text-[10px] sm:text-[11px] text-slate-500">Tracked visitors</p>
               </div>
 
-              <div className="bg-slate-950/70 border border-slate-800 p-4 rounded-2xl space-y-1">
+              <div className="bg-slate-950/70 border border-slate-800 p-3.5 sm:p-4 rounded-2xl space-y-1">
                 <div className="flex items-center justify-between text-slate-400">
-                  <span className="text-[11px] font-bold uppercase tracking-wider">New (24h)</span>
+                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">New (24h)</span>
                   <TrendingUp className="w-4 h-4 text-emerald-400" />
                 </div>
-                <div className="text-2xl font-black text-white tabular-nums">{metrics.newUsersToday}</div>
-                <p className="text-[11px] text-slate-500">Joined past day</p>
+                <div className="text-xl sm:text-2xl font-black text-white tabular-nums">{metrics.newUsersToday}</div>
+                <p className="text-[10px] sm:text-[11px] text-slate-500">Joined past day</p>
               </div>
 
-              <div className="bg-slate-950/70 border border-slate-800 p-4 rounded-2xl space-y-1">
+              <div className="bg-slate-950/70 border border-slate-800 p-3.5 sm:p-4 rounded-2xl space-y-1">
                 <div className="flex items-center justify-between text-slate-400">
-                  <span className="text-[11px] font-bold uppercase tracking-wider">Returning</span>
+                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">Returning</span>
                   <Activity className="w-4 h-4 text-amber-400" />
                 </div>
-                <div className="text-2xl font-black text-white tabular-nums">{metrics.returningUsers}</div>
-                <p className="text-[11px] text-slate-500">Multiple sessions</p>
+                <div className="text-xl sm:text-2xl font-black text-white tabular-nums">{metrics.returningUsers}</div>
+                <p className="text-[10px] sm:text-[11px] text-slate-500">Multiple visits</p>
               </div>
 
-              <div className="bg-slate-950/70 border border-slate-800 p-4 rounded-2xl space-y-1">
+              <div className="bg-slate-950/70 border border-slate-800 p-3.5 sm:p-4 rounded-2xl space-y-1">
                 <div className="flex items-center justify-between text-slate-400">
-                  <span className="text-[11px] font-bold uppercase tracking-wider">Total Items</span>
+                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">Total Items</span>
                   <Database className="w-4 h-4 text-blue-400" />
                 </div>
-                <div className="text-2xl font-black text-white tabular-nums">{metrics.totalItems}</div>
-                <p className="text-[11px] text-slate-500">Vault references</p>
+                <div className="text-xl sm:text-2xl font-black text-white tabular-nums">{metrics.totalItems}</div>
+                <p className="text-[10px] sm:text-[11px] text-slate-500">Vault references</p>
               </div>
 
-              <div className="bg-slate-950/70 border border-slate-800 p-4 rounded-2xl space-y-1">
+              <div className="bg-slate-950/70 border border-slate-800 p-3.5 sm:p-4 rounded-2xl space-y-1">
                 <div className="flex items-center justify-between text-slate-400">
-                  <span className="text-[11px] font-bold uppercase tracking-wider">Saves/User</span>
+                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">Saves/User</span>
                   <TrendingUp className="w-4 h-4 text-purple-400" />
                 </div>
-                <div className="text-2xl font-black text-white tabular-nums">{metrics.savesPerUser}</div>
-                <p className="text-[11px] text-slate-500">Average per visitor</p>
+                <div className="text-xl sm:text-2xl font-black text-white tabular-nums">{metrics.savesPerUser}</div>
+                <p className="text-[10px] sm:text-[11px] text-slate-500">Average per visitor</p>
               </div>
 
-              <div className="bg-slate-950/70 border border-slate-800 p-4 rounded-2xl space-y-1">
+              <div className="bg-slate-950/70 border border-slate-800 p-3.5 sm:p-4 rounded-2xl space-y-1">
                 <div className="flex items-center justify-between text-slate-400">
-                  <span className="text-[11px] font-bold uppercase tracking-wider">Active (24h)</span>
+                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">Active (24h)</span>
                   <Users className="w-4 h-4 text-emerald-400" />
                 </div>
-                <div className="text-2xl font-black text-white tabular-nums">{metrics.activeUsers24h}</div>
-                <p className="text-[11px] text-slate-500">Active past day</p>
+                <div className="text-xl sm:text-2xl font-black text-white tabular-nums">{metrics.activeUsers24h}</div>
+                <p className="text-[10px] sm:text-[11px] text-slate-500">Active past day</p>
               </div>
             </div>
 
-            {/* Users Table */}
-            <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
-              <div className="flex items-center justify-between">
+            {/* Users Table - Fully Responsive */}
+            <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xl overflow-hidden">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <h2 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                  Tracked Anonymous Visitors ({metrics.usersList.length})
+                  All Signed & Tracked Visitors ({metrics.usersList.length})
                 </h2>
-                <span className="text-[11px] text-slate-500">Synced in real-time with Firestore</span>
+                <span className="text-[11px] text-slate-500">Every visitor who has ever clicked the link</span>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-900 text-slate-400 font-semibold border-b border-slate-800">
-                    <tr>
-                      <th className="p-3 rounded-l-xl">Visitor ID</th>
-                      <th className="p-3">Session Count</th>
-                      <th className="p-3">First Joined</th>
-                      <th className="p-3 rounded-r-xl">Last Active</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/80">
-                    {metrics.usersList.map((u) => (
-                      <tr key={u.id} className="hover:bg-slate-900/50">
-                        <td className="p-3 font-mono text-slate-300">{u.id}</td>
-                        <td className="p-3 font-bold text-indigo-400 tabular-nums">{u.sessionCount || 1}</td>
-                        <td className="p-3 text-slate-400">
-                          {new Date(u.createdAt || Date.now()).toLocaleString()}
-                        </td>
-                        <td className="p-3 text-slate-400">
-                          {new Date(u.lastActive || Date.now()).toLocaleString()}
-                        </td>
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+                  <table className="w-full text-xs text-left whitespace-nowrap">
+                    <thead className="bg-slate-900 text-slate-400 font-semibold border-b border-slate-800">
+                      <tr>
+                        <th className="p-3 rounded-l-xl">Visitor ID</th>
+                        <th className="p-3">Session Count</th>
+                        <th className="p-3">First Joined</th>
+                        <th className="p-3 rounded-r-xl">Last Active</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/80">
+                      {metrics.usersList.map((u) => (
+                        <tr key={u.id} className="hover:bg-slate-900/50">
+                          <td className="p-3 font-mono text-slate-300">{u.id}</td>
+                          <td className="p-3 font-bold text-indigo-400 tabular-nums">{u.sessionCount || 1}</td>
+                          <td className="p-3 text-slate-400">
+                            {new Date(u.createdAt || Date.now()).toLocaleString()}
+                          </td>
+                          <td className="p-3 text-slate-400">
+                            {new Date(u.lastActive || Date.now()).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </>
@@ -267,7 +265,7 @@ export const AdminView: React.FC = () => {
       </main>
 
       {/* Admin Footer */}
-      <footer className="bg-slate-950 border-t border-slate-800 px-6 py-4 text-center text-xs text-slate-500">
+      <footer className="bg-slate-950 border-t border-slate-800 px-4 sm:px-6 py-4 text-center text-xs text-slate-500">
         KeepIt Secure Admin Console · Authorized access only
       </footer>
     </div>
